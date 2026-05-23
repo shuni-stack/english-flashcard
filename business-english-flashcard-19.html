@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>ビジネス英語</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080d1a;--card:#0f172a;--border:rgba(255,255,255,.07);
+  --blue:#3b82f6;--green:#10b981;--yellow:#fbbf24;--red:#ef4444;
+  --text:#f1f5f9;--muted:#475569;--dim:#1e293b;
+  --nav:64px;--safe:env(safe-area-inset-bottom,0px);
+  --max:440px;--card-font:21px;--jp-font:15px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;overscroll-behavior:none}
+body{
+  background:var(--bg);font-family:'Noto Sans JP','Hiragino Sans',sans-serif;
+  color:var(--text);display:flex;flex-direction:column;align-items:center;
+  padding:12px 14px calc(var(--nav) + var(--safe) + 12px);
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+}
+button{cursor:pointer;border:none;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:all .15s}
+button:active:not(:disabled){transform:scale(0.96)}
+button:disabled{opacity:.4;cursor:not-allowed}
+#app{width:100%;max-width:var(--max)}
+
+/* bottom nav */
+#bnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(8,13,26,.97);border-top:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:stretch;padding-bottom:var(--safe);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.nb{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 4px;gap:3px;font-size:11px;font-weight:700;color:var(--muted);
+  background:none;min-height:var(--nav);
+}
+.nb.on{color:var(--blue)}
+.nb .ic{font-size:20px;line-height:1}
+
+/* flip */
+.fw{perspective:1200px;width:100%;cursor:pointer;touch-action:manipulation}
+.fi{position:relative;width:100%;min-height:280px;transition:transform .45s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.fi.f{transform:rotateY(180deg)}
+.ff,.fb{backface-visibility:hidden;-webkit-backface-visibility:hidden;width:100%;border-radius:20px;min-height:280px}
+.fb{position:absolute;top:0;left:0;transform:rotateY(180deg)}
+
+/* card image */
+.card-img{width:100%;height:110px;object-fit:cover;border-radius:12px;margin-bottom:10px;opacity:.7}
+.card-svg{width:100%;height:100px;margin-bottom:10px;opacity:.18}
+
+/* tags */
+.tag{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+.l初級{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(52,211,153,.3)}
+.l中級{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.l上級{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(248,113,113,.3)}
+.sc{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+.sr{background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+
+/* mode toggle — card直下 */
+#mode-toggle{
+  width:100%;padding:13px;border-radius:14px;font-size:14px;font-weight:700;
+  margin-top:10px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+#mode-toggle.silent{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+#mode-toggle.voice{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+
+/* rate buttons */
+.rr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rno{padding:16px;border-radius:14px;font-size:15px;font-weight:700;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.ryes{padding:16px;border-radius:14px;font-size:15px;font-weight:700;background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(52,211,153,.3)}
+
+/* speak btn */
+.spk{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+  border-radius:24px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#94a3b8;
+}
+.spk.on{background:rgba(16,185,129,.2);border-color:rgba(52,211,153,.5);color:#34d399}
+
+/* recording */
+.recbox{width:100%;border-radius:14px;padding:12px 16px;margin-bottom:8px;display:flex;flex-direction:column;align-items:center;gap:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)}
+.reddot{width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0}
+.hintbox{width:100%;border-radius:30px;padding:10px 18px;margin-bottom:8px;display:flex;align-items:center;gap:8px;justify-content:center;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2)}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.reddot.pulse{animation:rp 1s ease infinite}
+
+/* fold6 closed (360px) optimizations */
+@media(max-width:390px){
+  :root{--card-font:19px;--jp-font:14px}
+  body{padding-left:10px;padding-right:10px}
+  .rno,.ryes{padding:14px;font-size:14px}
+  #mode-toggle{padding:12px;font-size:13px}
+}
+/* tablet / fold6 open (≥600px) */
+@media(min-width:600px){
+  :root{--max:560px;--card-font:23px;--jp-font:16px}
+  .rno,.ryes{padding:18px;font-size:16px}
+  .card-img{height:140px}
+}
+/* PC (≥1024px) */
+@media(min-width:1024px){
+  :root{--max:640px}
+  body{padding-top:24px}
+}
+/* misc */
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fu .25s ease forwards}
+.card-s{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
+.prog{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="bnav">
+  <button class="nb" id="nb-home" onclick="navTo('home')"><span class="ic">🏠</span><span>ホーム</span></button>
+  <button class="nb" id="nb-stats" onclick="navTo('stats')"><span class="ic">📊</span><span>統計</span></button>
+</nav>
+<script>
+// ═══ SCENE CONFIG ════════════════════════════════════════════════════════════
+const SC={
+  "会議":{em:"🤝",col:"#3b82f6",unsplash:"business meeting office",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><rect x="20" y="45" width="160" height="50" rx="8" fill="#1e40af" opacity=".5"/><rect x="35" y="53" width="130" height="5" rx="2" fill="#60a5fa" opacity=".4"/><rect x="35" y="64" width="90" height="5" rx="2" fill="#60a5fa" opacity=".25"/><circle cx="55" cy="28" r="14" fill="#2563eb" opacity=".6"/><circle cx="100" cy="23" r="14" fill="#2563eb" opacity=".6"/><circle cx="145" cy="28" r="14" fill="#2563eb" opacity=".6"/></svg>`},
+  "メール":{em:"📧",col:"#6366f1",unsplash:"laptop email work desk",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><rect x="20" y="20" width="160" height="70" rx="10" fill="#312e81" opacity=".5"/><path d="M20 30 L100 68 L180 30" stroke="#818cf8" stroke-width="3" opacity=".5" fill="none"/></svg>`},
+  "交渉":{em:"💼",col:"#f59e0b",unsplash:"business negotiation handshake",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><rect x="55" y="30" width="90" height="55" rx="8" fill="#92400e" opacity=".45"/><rect x="75" y="20" width="50" height="13" rx="4" fill="#78350f" opacity=".55"/><rect x="68" y="50" width="64" height="4" rx="2" fill="#fbbf24" opacity=".35"/><rect x="68" y="61" width="44" height="4" rx="2" fill="#fbbf24" opacity=".25"/><circle cx="155" cy="35" r="18" fill="#d97706" opacity=".25"/><path d="M148 35 L155 42 L165 29" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" opacity=".6"/></svg>`},
+  "雑談":{em:"☕",col:"#10b981",unsplash:"coffee break colleagues chat",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><ellipse cx="85" cy="85" rx="28" ry="8" fill="#065f46" opacity=".4"/><rect x="62" y="48" width="46" height="40" rx="8" fill="#047857" opacity=".45"/><path d="M108 58 Q122 58 122 70 Q122 82 108 82" stroke="#34d399" stroke-width="4" fill="none" opacity=".4"/><path d="M75 43 Q75 33 80 28" stroke="#6ee7b7" stroke-width="2" fill="none" opacity=".35"/><path d="M85 40 Q85 28 91 23" stroke="#6ee7b7" stroke-width="2" fill="none" opacity=".35"/></svg>`},
+  "プレゼン":{em:"📊",col:"#8b5cf6",unsplash:"presentation business meeting projector",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><rect x="30" y="15" width="140" height="75" rx="6" fill="#4c1d95" opacity=".45"/><rect x="52" y="62" width="14" height="20" rx="2" fill="#7c3aed" opacity=".6"/><rect x="74" y="52" width="14" height="30" rx="2" fill="#7c3aed" opacity=".6"/><rect x="96" y="44" width="14" height="38" rx="2" fill="#a78bfa" opacity=".6"/><rect x="118" y="55" width="14" height="27" rx="2" fill="#7c3aed" opacity=".6"/><path d="M52 62 L81 52 L103 44 L125 55" stroke="#c4b5fd" stroke-width="2" fill="none" opacity=".5"/></svg>`},
+  "クレーム":{em:"🔧",col:"#ef4444",unsplash:"customer service support help",
+    svg:`<svg viewBox="0 0 200 100" fill="none"><circle cx="100" cy="48" r="34" fill="#7f1d1d" opacity=".35"/><path d="M100 24 L104 39 L118 39 L107 48 L111 63 L100 54 L89 63 L93 48 L82 39 L96 39 Z" fill="#ef4444" opacity=".55"/></svg>`},
+};
+
+// ═══ QUESTION BANK ════════════════════════════════════════════════════════════
+const QB=[
+  {j:"会議を始めましょう",e:"Let's get started.",sc:"会議",lv:"初級",ctx:"Meeting kickoff — replaces the stiff 'Shall we begin?'"},
+  {j:"少々お時間をいただけますか？",e:"Could I have a moment of your time?",sc:"会議",lv:"初級",ctx:"Polite ask before raising a topic"},
+  {j:"確認させてください",e:"Let me clarify that.",sc:"会議",lv:"初級",ctx:"Before restating or checking a point"},
+  {j:"ご意見をお聞かせください",e:"I'd love to hear your thoughts.",sc:"会議",lv:"初級",ctx:"Inviting input from a colleague or client"},
+  {j:"少し休憩を取りましょう",e:"Let's take a short break.",sc:"会議",lv:"初級",ctx:"Mid-meeting breather"},
+  {j:"それは想定の範囲内です",e:"That's within our expectations.",sc:"会議",lv:"中級",ctx:"Reassuring stakeholders that results are on track"},
+  {j:"その点については持ち帰って検討します",e:"I'll take that back and look into it.",sc:"会議",lv:"中級",ctx:"When you need time before committing"},
+  {j:"議題に戻りましょう",e:"Let's get back on track.",sc:"会議",lv:"中級",ctx:"Redirecting a drifting discussion"},
+  {j:"その件はオフラインで話しましょう",e:"Let's take that offline.",sc:"会議",lv:"中級",ctx:"Side topics that would consume meeting time"},
+  {j:"全員の認識を合わせましょう",e:"Let's make sure we're all on the same page.",sc:"会議",lv:"中級",ctx:"Before proceeding to avoid misalignment"},
+  {j:"その提案には懸念があります",e:"I have some reservations about that proposal.",sc:"会議",lv:"上級",ctx:"Diplomatic pushback without outright rejection"},
+  {j:"合意形成を図りたいと思います",e:"I'd like us to reach a consensus on this.",sc:"会議",lv:"上級",ctx:"Steering toward a group decision"},
+  {j:"その施策の優先度を再評価すべきです",e:"We should reassess the priority of that initiative.",sc:"会議",lv:"上級",ctx:"Challenging a roadmap item"},
+  {j:"ちょっと確認してもいいですか？",e:"Could I just double-check something?",sc:"会議",lv:"初級",ctx:"Low-key verification without interrupting flow"},
+  {j:"その点、もう少し詳しく教えていただけますか？",e:"Could you elaborate on that a bit more?",sc:"会議",lv:"中級",ctx:"Asking for depth without seeming critical"},
+  {j:"予算は承認済みです",e:"The budget has been approved.",sc:"会議",lv:"初級",ctx:"Confirming financial sign-off"},
+  {j:"その案は実現可能だと思います",e:"I think that's a viable option.",sc:"会議",lv:"中級",ctx:"Showing measured support for an idea"},
+  {j:"プロジェクトは順調に進んでいます",e:"The project is on track.",sc:"会議",lv:"初級",ctx:"Status update"},
+  {j:"締め切りを守ることが重要です",e:"It's important that we meet the deadline.",sc:"会議",lv:"中級",ctx:"Emphasizing urgency"},
+  {j:"チーム全員の協力が必要です",e:"We'll need everyone on the team to pull together.",sc:"会議",lv:"中級",ctx:"Rallying the team"},
+  {j:"その方向で進めましょう",e:"Let's proceed in that direction.",sc:"会議",lv:"初級",ctx:"Giving green light"},
+  {j:"他にご意見はありますか？",e:"Does anyone have anything else to add?",sc:"会議",lv:"初級",ctx:"Closing a discussion point"},
+  {j:"お世話になっております",e:"I hope this email finds you well.",sc:"メール",lv:"初級",ctx:"Standard opening — direct equivalent of the Japanese greeting"},
+  {j:"ご確認よろしくお願いします",e:"Please let me know if you have any questions.",sc:"メール",lv:"初級",ctx:"Closing line after sharing info"},
+  {j:"添付ファイルをご覧ください",e:"Please find the attached file.",sc:"メール",lv:"初級",ctx:"Directing attention to an attachment"},
+  {j:"取り急ぎご連絡まで",e:"Just a quick note to keep you in the loop.",sc:"メール",lv:"初級",ctx:"Short FYI emails with no action required"},
+  {j:"お返事をお待ちしております",e:"I look forward to hearing from you.",sc:"メール",lv:"中級",ctx:"Polite call-to-action close"},
+  {j:"ご多忙のところ恐れ入りますが",e:"I apologize for reaching out at such a busy time.",sc:"メール",lv:"中級",ctx:"Softening an ask when you know the person is swamped"},
+  {j:"先日のご連絡の件ですが",e:"Regarding your message the other day,",sc:"メール",lv:"中級",ctx:"Referencing a previous email thread"},
+  {j:"ご都合の良い日時をお知らせください",e:"Please let me know your availability.",sc:"メール",lv:"中級",ctx:"Scheduling a meeting"},
+  {j:"念のため確認させてください",e:"Just to be safe, could you confirm…?",sc:"メール",lv:"中級",ctx:"Double-checking important details"},
+  {j:"ご検討いただけますと幸いです",e:"I would greatly appreciate your consideration.",sc:"メール",lv:"上級",ctx:"Formal request to a senior stakeholder"},
+  {j:"引き続きご支援をよろしくお願いいたします",e:"I look forward to your continued support.",sc:"メール",lv:"上級",ctx:"Relationship maintenance with a long-term partner"},
+  {j:"何かあればいつでも連絡ください",e:"Please don't hesitate to reach out anytime.",sc:"メール",lv:"初級",ctx:"Open-door closing"},
+  {j:"ご連絡が遅くなり申し訳ありません",e:"I apologize for the delayed response.",sc:"メール",lv:"中級",ctx:"Addressing lateness transparently"},
+  {j:"本件についてご相談させてください",e:"I'd like to discuss this matter with you.",sc:"メール",lv:"中級",ctx:"Requesting a meeting or call"},
+  {j:"早急にご対応をお願いします",e:"We'd appreciate a prompt response.",sc:"メール",lv:"上級",ctx:"Formal urgency — polite but firm"},
+  {j:"フォローアップします",e:"I'll follow up on that.",sc:"メール",lv:"初級",ctx:"Committing to a next action"},
+  {j:"もう少し融通が利きますか？",e:"Is there any flexibility on your end?",sc:"交渉",lv:"中級",ctx:"Asking for room to negotiate without being aggressive"},
+  {j:"お互いにとって有益な提案だと思います",e:"I believe this is a mutually beneficial proposal.",sc:"交渉",lv:"中級",ctx:"Win-win framing"},
+  {j:"条件次第では検討できます",e:"We could consider it depending on the terms.",sc:"交渉",lv:"中級",ctx:"Conditional acceptance"},
+  {j:"その価格は予算を超えています",e:"That price exceeds our budget.",sc:"交渉",lv:"中級",ctx:"Straightforward budget constraint"},
+  {j:"少し時間をいただけますか？",e:"Could we have some time to review this?",sc:"交渉",lv:"中級",ctx:"Buying time before a decision"},
+  {j:"どこかで妥協点を見つけましょう",e:"Let's find some middle ground.",sc:"交渉",lv:"上級",ctx:"Moving toward compromise"},
+  {j:"そのリスクは許容できません",e:"That level of risk is not acceptable to us.",sc:"交渉",lv:"上級",ctx:"Hard line on risk — firm but professional"},
+  {j:"今回は見送らせていただきます",e:"We'll have to pass on this opportunity for now.",sc:"交渉",lv:"上級",ctx:"Polite decline that leaves the door open"},
+  {j:"条件が整えばぜひ前向きに進めたいです",e:"We'd be happy to move forward if the terms can be aligned.",sc:"交渉",lv:"上級",ctx:"Conditional yes — positive tone"},
+  {j:"率直に申し上げると",e:"To be candid with you,",sc:"交渉",lv:"中級",ctx:"Signaling honest, direct feedback"},
+  {j:"ご提案はとても興味深いです",e:"Your proposal is very interesting.",sc:"交渉",lv:"初級",ctx:"Positive but non-committal opener"},
+  {j:"少し考える時間をいただけますか？",e:"Could we have some time to think this over?",sc:"交渉",lv:"中級",ctx:"Slowing down a pressure situation"},
+  {j:"最近どうですか？",e:"How have you been lately?",sc:"雑談",lv:"初級",ctx:"Casual catch-up opener"},
+  {j:"週末はいかがでしたか？",e:"How was your weekend?",sc:"雑談",lv:"初級",ctx:"Monday morning small talk"},
+  {j:"お会いできて光栄です",e:"It's a pleasure to meet you.",sc:"雑談",lv:"初級",ctx:"First meeting — formal but warm"},
+  {j:"お疲れ様でした",e:"Good work today.",sc:"雑談",lv:"初級",ctx:"End-of-day sign-off"},
+  {j:"ご出張お疲れ様でした",e:"Welcome back — hope the trip went well.",sc:"雑談",lv:"初級",ctx:"Greeting a colleague returning from a business trip"},
+  {j:"日本の夏は本当に蒸し暑いですよね",e:"The summer in Japan is really humid, isn't it?",sc:"雑談",lv:"中級",ctx:"Weather small talk — great icebreaker with visitors"},
+  {j:"先日はありがとうございました",e:"Thank you for the other day.",sc:"雑談",lv:"中級",ctx:"Following up on a meal, favor, or meeting"},
+  {j:"また一緒に仕事できるのを楽しみにしています",e:"I look forward to working with you again.",sc:"雑談",lv:"中級",ctx:"Closing a project or visit on a positive note"},
+  {j:"引き続きよろしくお願いします",e:"I look forward to our continued collaboration.",sc:"雑談",lv:"中級",ctx:"Relationship maintenance"},
+  {j:"本日はよいお話ができました",e:"It was a very productive conversation today.",sc:"雑談",lv:"中級",ctx:"Positive close to a meeting or call"},
+  {j:"今後ともよろしくお願いいたします",e:"I look forward to a strong ongoing partnership.",sc:"雑談",lv:"上級",ctx:"Formal close — long-term relationship framing"},
+  {j:"本日はお時間をいただきありがとうございます",e:"Thank you for taking the time to be here today.",sc:"プレゼン",lv:"初級",ctx:"Opening — acknowledges the audience's commitment"},
+  {j:"次のスライドをご覧ください",e:"Let's move on to the next slide.",sc:"プレゼン",lv:"初級",ctx:"Transitioning between slides"},
+  {j:"ご質問はありますか？",e:"Are there any questions?",sc:"プレゼン",lv:"初級",ctx:"Opening Q&A"},
+  {j:"本日のアジェンダをご説明します",e:"Let me walk you through today's agenda.",sc:"プレゼン",lv:"初級",ctx:"Setting the structure at the start"},
+  {j:"スケジュールを共有します",e:"Let me share the timeline.",sc:"プレゼン",lv:"初級",ctx:"Presenting a project schedule"},
+  {j:"ご参加ありがとうございました",e:"Thank you for joining us today.",sc:"プレゼン",lv:"初級",ctx:"Closing a webinar or meeting"},
+  {j:"データが示すように",e:"As the data suggests,",sc:"プレゼン",lv:"中級",ctx:"Referencing a chart or stat"},
+  {j:"要点をまとめますと",e:"To summarize the key points,",sc:"プレゼン",lv:"中級",ctx:"Pre-closing recap"},
+  {j:"ここが最も重要なポイントです",e:"This is the most critical takeaway.",sc:"プレゼン",lv:"中級",ctx:"Emphasizing a key insight"},
+  {j:"詳細は後ほどお送りします",e:"I'll send you the details afterward.",sc:"プレゼン",lv:"中級",ctx:"Handling a question you want to address offline"},
+  {j:"この施策により売上が20%改善する見込みです",e:"This initiative is expected to improve sales by 20%.",sc:"プレゼン",lv:"上級",ctx:"Quantified business impact statement"},
+  {j:"競合他社との差別化ポイントはここにあります",e:"This is where we differentiate ourselves from competitors.",sc:"プレゼン",lv:"上級",ctx:"Competitive positioning slide"},
+  {j:"リスクを最小化しつつ最大の効果を狙います",e:"We're aiming to maximize impact while minimizing risk.",sc:"プレゼン",lv:"上級",ctx:"Balanced strategy framing"},
+  {j:"ご不便をおかけして申し訳ございません",e:"I sincerely apologize for the inconvenience.",sc:"クレーム",lv:"初級",ctx:"First response to any complaint"},
+  {j:"すぐに対応いたします",e:"We'll address this right away.",sc:"クレーム",lv:"初級",ctx:"Committing to immediate action"},
+  {j:"詳しくお聞かせいただけますか？",e:"Could you give me more details?",sc:"クレーム",lv:"初級",ctx:"Gathering information before responding"},
+  {j:"再発防止に努めます",e:"We will take steps to prevent this from happening again.",sc:"クレーム",lv:"中級",ctx:"Closing a complaint with a forward-looking commitment"},
+  {j:"ご期待に沿えず申し訳ありませんでした",e:"I'm sorry we didn't meet your expectations.",sc:"クレーム",lv:"中級",ctx:"Acknowledging a gap between promise and delivery"},
+  {j:"原因を調査してご報告します",e:"We'll investigate the cause and get back to you.",sc:"クレーム",lv:"中級",ctx:"Structured response when root cause is unknown"},
+  {j:"代替案をご提案させてください",e:"Allow me to propose an alternative solution.",sc:"クレーム",lv:"中級",ctx:"Offering a workaround or replacement"},
+  {j:"ご迷惑をおかけしたことを深くお詫び申し上げます",e:"I deeply apologize for any trouble this may have caused.",sc:"クレーム",lv:"上級",ctx:"Formal, senior-level apology for a significant incident"},
+  {j:"今後このようなことが二度と起きないよう体制を整えます",e:"We will restructure our processes to ensure this never happens again.",sc:"クレーム",lv:"上級",ctx:"Executive-level commitment after a serious failure"},
+  {j:"誤解を招いてしまい申し訳ありません",e:"I apologize if there was any miscommunication on my end.",sc:"クレーム",lv:"上級",ctx:"Taking partial ownership of confusion"},
+  {j:"担当者に引き継ぎます",e:"I'll hand this over to the relevant team member.",sc:"クレーム",lv:"中級",ctx:"Escalating or transferring a case"},
+];
+
+// ═══ CONSTANTS ════════════════════════════════════════════════════════════════
+const INTV=[1,1440,4320,10080,20160];
+const IL=["1分後","1日後","3日後","7日後","14日後","定着済み"];
+const SCENES=["すべて","会議","メール","交渉","雑談","プレゼン","クレーム"];
+const LEVELS=["すべて","初級","中級","上級"];
+const LVS={"初級":{bg:"rgba(16,185,129,.15)",t:"#34d399",b:"rgba(52,211,153,.3)"},"中級":{bg:"rgba(251,191,36,.15)",t:"#fbbf24",b:"rgba(251,191,36,.3)"},"上級":{bg:"rgba(239,68,68,.15)",t:"#f87171",b:"rgba(248,113,113,.3)"}};
+
+// ═══ STATE ════════════════════════════════════════════════════════════════════
+const S={
+  tab:"home",mode:"home",
+  filterScene:"すべて",filterLevel:"すべて",showFilters:false,voiceMode:false,
+  queue:[],qIdx:0,flipped:false,
+  deck:{},elapsed:null,flipTime:null,
+  voiceText:"",voiceScore:null,voiceFeedback:null,
+  timerInterval:null,startTime:null,
+  sessionTimes:[],todayCount:0,todayGoal:10,
+  weakScene:null,sessionSceneScores:{},
+  imgCache:{},
+};
+try{const p=JSON.parse(localStorage.getItem("bef3")||"{}");Object.assign(S,{deck:p.deck||{},todayGoal:p.todayGoal||10,weakScene:p.weakScene||null});}catch(e){}
+function save(){try{localStorage.setItem("bef3",JSON.stringify({deck:S.deck,todayGoal:S.todayGoal,weakScene:S.weakScene}));}catch(e){}}
+
+function tR(s){if(s===null)return null;if(s<=3)return{l:"即答",em:"⚡",c:"#10b981",bg:"rgba(16,185,129,.12)",b:"rgba(52,211,153,.3)"};if(s<=7)return{l:"普通",em:"🙂",c:"#fbbf24",bg:"rgba(251,191,36,.12)",b:"rgba(251,191,36,.3)"};return{l:"じっくり",em:"🐢",c:"#f87171",bg:"rgba(239,68,68,.12)",b:"rgba(248,113,113,.3)"};}
+function sim(a,b){const c=s=>s.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(" ").filter(Boolean);const wa=new Set(c(a)),wb=new Set(c(b));if(!wb.size)return 0;let m=0;wb.forEach(w=>{if(wa.has(w))m++;});return Math.round(m/wb.size*100);}
+async function getAIFeedback(japanese,modelEnglish,userSpeech){
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:600,
+        system:"あなたはビジネス英語の専門コーチです。JSON形式のみで返してください。マークダウン不可。",
+        messages:[{role:"user",content:`日本語原文: ${japanese}
+模範解答: ${modelEnglish}
+受講者の発話: ${userSpeech}
+
+以下のJSON形式で採点:
+{"score":0〜100の整数,"good":"できている点1〜2文","improve":"改善点1〜2文","natural":"模範解答がなぜ自然か1〜2文","tip":"覚えるべき表現や文法ポイント一言"}`}]
+      })
+    });
+    const dat=await res.json();
+    const txt=dat.content.map(b=>b.text||"").join("");
+    return JSON.parse(txt.replace(/```json|```/g,"").trim());
+  }catch(e){console.error("AI feedback error:",e);return null;}
+}
+function sh(a){return[...a].sort(()=>Math.random()-.5)}
+function getDue(){return Object.entries(S.deck).filter(([,v])=>!v.graduated&&v.nextReview<=Date.now()).map(([k])=>QB.find(q=>q.j===k)).filter(Boolean);}
+function getF(){return QB.filter(q=>(S.filterScene==="すべて"||q.sc===S.filterScene)&&(S.filterLevel==="すべて"||q.lv===S.filterLevel));}
+function tL(){return Object.keys(S.deck).length}
+function tG(){return Object.values(S.deck).filter(v=>v.graduated).length}
+
+// ═══ IMAGE FETCH ══════════════════════════════════════════════════════════════
+async function fetchImg(scene){
+  if(S.imgCache[scene])return S.imgCache[scene];
+  const cfg=SC[scene];if(!cfg)return null;
+  try{
+    // Use Picsum with deterministic seed per scene
+    const seeds={"会議":10,"メール":20,"交渉":30,"雑談":40,"プレゼン":50,"クレーム":60};
+    const seed=seeds[scene]||1;
+    const url=`https://picsum.photos/seed/${seed}/400/120`;
+    // Test if reachable
+    const r=await fetch(url,{method:'HEAD',signal:AbortSignal.timeout(3000)});
+    if(r.ok){S.imgCache[scene]=url;return url;}
+  }catch(e){}
+  return null;
+}
+
+// ═══ TTS ══════════════════════════════════════════════════════════════════════
+let ttsV=null,ttsSp=false,ttsRp=false;
+function initTTS(){if(!window.speechSynthesis)return;function pk(){const v=speechSynthesis.getVoices();ttsV=[v.find(x=>x.name==="Samantha"),v.find(x=>x.name==="Google US English"),v.find(x=>x.name.toLowerCase().includes("female")&&x.lang.startsWith("en")),v.find(x=>x.lang==="en-US"),v.find(x=>x.lang.startsWith("en"))].find(Boolean)||null;}pk();speechSynthesis.onvoiceschanged=pk;}
+function spkOnce(t,cb){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.88;u.pitch=1.1;u.volume=1;if(ttsV)u.voice=ttsV;u.onstart=()=>{ttsSp=true;updSpk();};u.onend=()=>{ttsSp=false;updSpk();if(cb)cb();};u.onerror=()=>{ttsSp=false;updSpk();};speechSynthesis.speak(u);}
+function startRepeat(t){ttsRp=true;function lp(){if(!ttsRp)return;spkOnce(t,()=>{if(ttsRp)setTimeout(lp,600);});}lp();}
+function stopRepeat(){ttsRp=false;if(window.speechSynthesis)speechSynthesis.cancel();ttsSp=false;updSpk();}
+function updSpk(){const b=document.getElementById("spk-btn");if(!b)return;if(ttsSp||ttsRp){b.textContent="⏹ 停止";b.className="spk on";}else{b.textContent="🔊 リピート再生";b.className="spk";}}
+
+// ═══ SPEECH REC ═══════════════════════════════════════════════════════════════
+const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
+let listening=false,activeRec=null,accTxt="",_tf=false;
+async function commit(){
+  const t=accTxt.trim();
+  const c=S.queue[S.qIdx];
+  S.voiceText=t||"（聞き取れませんでした）";
+  S.voiceScore=t&&c?sim(t,c.e):0;
+  S.voiceFeedback=null; // reset, will load async
+  clearInterval(S.timerInterval);
+  S.flipTime=parseFloat(((Date.now()-S.startTime)/1000).toFixed(1));
+  S.flipped=true;
+  accTxt="";
+  render();
+  if(c)setTimeout(()=>startRepeat(c.e),600);
+  // Fetch AI feedback in background, update when ready
+  if(t&&c){
+    const fb=await getAIFeedback(c.j,c.e,t);
+    if(fb){
+      S.voiceScore=fb.score;
+      S.voiceFeedback=fb;
+      // Update feedback panel without full re-render
+      const panel=document.getElementById("voice-fb-panel");
+      if(panel) updateFeedbackPanel(panel,fb,S.voiceText);
+    }
+  }
+}
+function initSR(){if(!SRC)console.warn("SpeechRecognition not supported");}
+function updateMicUI(){
+  // Update mic button and status WITHOUT calling render()
+  const btn=document.getElementById("mic-btn");
+  const status=document.getElementById("mic-status");
+  const interim=document.getElementById("vi");
+  if(btn){
+    btn.textContent=listening?"⏹":"🎤";
+    btn.style.background=listening
+      ?"linear-gradient(135deg,#dc2626,#ef4444)"
+      :"linear-gradient(135deg,#1d4ed8,#3b82f6)";
+    btn.style.boxShadow=listening
+      ?"0 0 0 8px rgba(239,68,68,.2),0 4px 20px rgba(239,68,68,.4)"
+      :"0 4px 20px rgba(59,130,246,.4)";
+    btn.style.animation=listening?"rp 1s ease infinite":"none";
+  }
+  if(status){
+    if(listening){
+      status.innerHTML='<span style="color:#f87171;font-weight:700">🔴 録音中</span><br><span style="color:rgba(248,113,113,.6);font-size:12px">もう一度タップで停止＆判定</span>';
+    }else{
+      status.innerHTML='<span style="color:#60a5fa;font-weight:600">👆 マイクボタンを押して録音開始</span>';
+    }
+  }
+  if(interim&&!listening&&accTxt){
+    interim.textContent='"'+accTxt+'"';
+  }
+}
+function makeSR(){
+  // Build a fresh SR instance and start it
+  // Called both initially and on each restart
+  if(!SRC||!listening) return;
+  if(activeRec){try{activeRec.abort();}catch(x){}activeRec=null;}
+  try{
+    const r=new SRC();
+    r.lang="en-US";
+    r.continuous=false;   // false = more reliable across all browsers
+    r.interimResults=true;
+    r.maxAlternatives=1;
+    r.onresult=e=>{
+      let final="",interim="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) final+=e.results[i][0].transcript+" ";
+        else interim+=e.results[i][0].transcript;
+      }
+      if(final.trim()) accTxt+=(accTxt?" ":"")+final.trim();
+      const el=document.getElementById("vi");
+      if(el){
+        const show=(accTxt+(interim?" "+interim:"")).trim();
+        el.textContent=show?'"'+show+'"':"（聞こえています...）";
+      }
+    };
+    r.onerror=e=>{
+      console.log("SR onerror:",e.error);
+      // aborted = we called abort() ourselves, ignore
+      if(e.error==="aborted") return;
+      // no-speech = silence, restart
+      if(e.error==="no-speech"){
+        activeRec=null;
+        if(listening) setTimeout(makeSR,100);
+        return;
+      }
+      // Other errors: stop
+      activeRec=null;listening=false;updateMicUI();
+    };
+    r.onend=()=>{
+      console.log("SR onend, listening="+listening);
+      activeRec=null;
+      // If still in listening state, restart immediately
+      if(listening) setTimeout(makeSR,80);
+    };
+    r.start();
+    activeRec=r;
+    console.log("SR started");
+  }catch(e){
+    console.error("makeSR error:",e.name,e.message);
+    activeRec=null;listening=false;updateMicUI();
+  }
+}
+function startListening(){
+  if(!SRC){alert("音声入力はChromeで使えます。HTTPSまたはlocalhost必須。");return;}
+  if(listening) return;
+  stopRepeat();
+  accTxt="";
+  listening=true;
+  updateMicUI();
+  makeSR();
+}
+function updateFeedbackPanel(panel,fb,userText){
+  const vsC=fb.score>=80?"#10b981":fb.score>=60?"#fbbf24":"#f87171";
+  panel.style.borderColor=vsC+"60";
+  panel.style.background=vsC+"10";
+  panel.innerHTML=`
+    <p style="color:#475569;font-size:10px;letter-spacing:2px;margin-bottom:8px">あなたの発話</p>
+    <p style="color:#cbd5e1;font-family:'DM Mono',monospace;font-size:13px;margin-bottom:12px">"${userText}"</p>
+    <div style="display:flex;align-items:baseline;gap:6px;justify-content:center;margin-bottom:12px">
+      <span style="color:${vsC};font-size:44px;font-weight:700;font-family:'DM Mono',monospace">${fb.score}</span>
+      <span style="color:${vsC};font-size:16px;font-weight:700">点</span>
+      <span style="color:rgba(148,163,184,.5);font-size:13px">/ 100点</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;text-align:left;width:100%">
+      <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px 12px">
+        <p style="color:#34d399;font-size:11px;font-weight:700;margin-bottom:4px">✅ できている点</p>
+        <p style="color:#d1fae5;font-size:13px;line-height:1.6">${fb.good}</p>
+      </div>
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:10px 12px">
+        <p style="color:#fbbf24;font-size:11px;font-weight:700;margin-bottom:4px">💡 こうすると自然</p>
+        <p style="color:#fef3c7;font-size:13px;line-height:1.6">${fb.improve}</p>
+      </div>
+      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:10px 12px">
+        <p style="color:#a5b4fc;font-size:11px;font-weight:700;margin-bottom:4px">📝 模範解答の解説</p>
+        <p style="color:#e0e7ff;font-size:13px;line-height:1.6">${fb.natural}</p>
+      </div>
+      <div style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:10px;padding:8px 12px">
+        <p style="color:#f9a8d4;font-size:12px">🔑 ${fb.tip}</p>
+      </div>
+    </div>
+  `;
+}
+function stopListening(){
+  listening=false;  // set FIRST so onend/onerror won't restart
+  if(activeRec){
+    try{activeRec.stop();}catch(x){}  // triggers onend -> but listening=false so no restart
+    activeRec=null;
+  }
+  updateMicUI();
+  setTimeout(()=>commit(),400);  // wait for last onresult before commit
+}
+
+// ═══ TIMER ════════════════════════════════════════════════════════════════════
+function startTimer(){clearInterval(S.timerInterval);S.startTime=Date.now();S.elapsed=0;S.timerInterval=setInterval(()=>{S.elapsed=Math.floor((Date.now()-S.startTime)/1000);const e=document.getElementById("tv");if(e)e.textContent=S.elapsed+"s";},200);}
+
+// ═══ ACTIONS ══════════════════════════════════════════════════════════════════
+function startStudy(){S.queue=sh(getF());S.qIdx=0;S.flipped=false;S.mode="study";S.voiceText="";S.voiceScore=null;S.sessionTimes=[];render();startTimer();}
+function startReview(){S.queue=sh(getDue());S.qIdx=0;S.flipped=false;S.mode="review";S.voiceText="";S.voiceScore=null;S.voiceFeedback=null;render();startTimer();}
+function goHome(){clearInterval(S.timerInterval);stopRepeat();if(listening){listening=false;if(activeRec){try{activeRec.abort();}catch(x){}activeRec=null;}}S.mode="home";S.flipped=false;render();}
+function navTo(t){if(S.mode==="study"||S.mode==="review")goHome();S.tab=t;render();}
+function toggleVoiceMode(){S.voiceMode=!S.voiceMode;render();}
+function flipCard(){if(!S.flipped){clearInterval(S.timerInterval);S.flipTime=parseFloat(((Date.now()-S.startTime)/1000).toFixed(1));const c=S.queue[S.qIdx];if(c){S.sessionTimes.push(S.flipTime);if(!S.deck[c.j])S.deck[c.j]={step:0,nextReview:0,graduated:false,times:[]};S.deck[c.j].times=(S.deck[c.j].times||[]).concat(S.flipTime).slice(-20);}S.flipped=true;render();if(c)setTimeout(()=>startRepeat(c.e),300);}else{stopRepeat();S.flipped=false;render();}}
+function handleResult(knew){stopRepeat();const c=S.queue[S.qIdx];if(!c)return;const ex=S.deck[c.j]||{step:0,times:[]};const ns=knew?Math.min(ex.step+1,INTV.length):0;S.deck[c.j]={...ex,step:ns,nextReview:Date.now()+(INTV[ns]||0)*60000,graduated:ns>=INTV.length};S.todayCount++;if(!S.sessionSceneScores[c.sc])S.sessionSceneScores[c.sc]=[];S.sessionSceneScores[c.sc].push(S.flipTime||5);const scT={};Object.entries(S.deck).forEach(([k,v])=>{const q=QB.find(x=>x.j===k);if(!q||!v.times||!v.times.length)return;if(!scT[q.sc])scT[q.sc]=[];scT[q.sc].push(...v.times);});let sl=null,sa=0;Object.entries(scT).forEach(([sc,arr])=>{const avg=arr.reduce((a,b)=>a+b,0)/arr.length;if(avg>sa){sa=avg;sl=sc;}});S.weakScene=sl;save();const nx=S.qIdx+1;if(nx>=S.queue.length){S.mode="done";clearInterval(S.timerInterval);render();}else{S.qIdx=nx;S.flipped=false;S.voiceText="";S.voiceScore=null;S.voiceFeedback=null;render();startTimer();}}
+
+// ═══ DOM HELPERS ══════════════════════════════════════════════════════════════
+function mk(tag,style,html){const e=document.createElement(tag);if(style)Object.assign(e.style,style);if(html!==undefined)e.innerHTML=html;return e;}
+function d(style,html){return mk("div",style,html);}
+function b(label,style,fn){const e=mk("button",style,label);e.addEventListener("click",fn);return e;}
+
+// ═══ RENDER ═══════════════════════════════════════════════════════════════════
+async function render(){
+  document.getElementById("nb-home").className="nb"+(S.tab==="home"&&S.mode==="home"?" on":"");
+  document.getElementById("nb-stats").className="nb"+(S.tab==="stats"?" on":"");
+  const app=document.getElementById("app");app.innerHTML="";
+  if(S.mode==="study"||S.mode==="review"){await rStudy(app);return;}
+  if(S.mode==="done"){rDone(app);return;}
+  rHdr(app);
+  const due=getDue();
+  if(due.length>0)rDueBanner(app,due);
+  if(S.tab==="home")rHome(app,due);
+  else rStats(app);
+}
+
+function rHdr(app){
+  const h=d({marginBottom:"12px",display:"flex",justifyContent:"space-between",alignItems:"center"});
+  h.innerHTML=`<div><div style="color:#2563eb;font-size:10px;letter-spacing:4px;font-family:'DM Mono',monospace;margin-bottom:3px">BUSINESS ENGLISH</div><h1 style="font-size:20px;font-weight:700">フラッシュカード</h1></div><div style="text-align:center"><div style="color:#1e293b;font-size:9px;letter-spacing:1.5px;margin-bottom:2px">定着</div><div style="color:#10b981;font-size:20px;font-family:'DM Mono',monospace">${tG()}</div></div>`;
+  app.appendChild(h);
+}
+
+function rDueBanner(app,due){
+  const w=d({marginBottom:"10px",background:"rgba(167,139,250,.1)",border:"1px solid rgba(167,139,250,.3)",borderRadius:"14px",padding:"13px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"});
+  w.innerHTML=`<div><div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:2px">🔁 復習タイム</div><div style="color:#6d28d9;font-size:12px">${due.length}問が届いています</div></div>`;
+  w.appendChild(b("復習 →",{background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",padding:"9px 18px",borderRadius:"10px",fontSize:"13px",fontWeight:"700"},startReview));
+  app.appendChild(w);
+}
+
+function rHome(app,due){
+  const filt=getF();
+
+  // ── MODE SELECTOR at top of home ───────────────────────────────────────
+  const ms=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"16px",padding:"16px",marginBottom:"14px"});
+  ms.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:12px;text-align:center">学習モードを選択</div>`;
+  const mrow=d({display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"});
+
+  const silBtn=document.createElement("button");
+  Object.assign(silBtn.style,{padding:"16px 10px",borderRadius:"14px",fontSize:"13px",fontWeight:"700",
+    cursor:"pointer",fontFamily:"inherit",lineHeight:"1.5",textAlign:"center",
+    background:!S.voiceMode?"rgba(59,130,246,.2)":"rgba(255,255,255,.04)",
+    color:!S.voiceMode?"#93c5fd":"#475569",
+    border:`1px solid ${!S.voiceMode?"rgba(59,130,246,.5)":"rgba(255,255,255,.08)"}`});
+  silBtn.innerHTML=`<div style="font-size:26px;margin-bottom:6px">🔇</div>サイレント<div style="font-size:10px;opacity:.7;margin-top:4px">カードをタップ</div>`;
+  silBtn.addEventListener("click",()=>{S.voiceMode=false;render();});
+
+  const voiBtn=document.createElement("button");
+  Object.assign(voiBtn.style,{padding:"16px 10px",borderRadius:"14px",fontSize:"13px",fontWeight:"700",
+    cursor:"pointer",fontFamily:"inherit",lineHeight:"1.5",textAlign:"center",
+    background:S.voiceMode?"rgba(239,68,68,.2)":"rgba(255,255,255,.04)",
+    color:S.voiceMode?"#f87171":"#475569",
+    border:`1px solid ${S.voiceMode?"rgba(239,68,68,.5)":"rgba(255,255,255,.08)"}`});
+  voiBtn.innerHTML=`<div style="font-size:26px;margin-bottom:6px">🎤</div>音声入力<div style="font-size:10px;opacity:.7;margin-top:4px">話して採点</div>`;
+  voiBtn.addEventListener("click",()=>{S.voiceMode=true;render();});
+
+  mrow.appendChild(silBtn);mrow.appendChild(voiBtn);ms.appendChild(mrow);
+  app.appendChild(ms);
+
+  // goal
+  const gp=Math.min(100,Math.round(S.todayCount/S.todayGoal*100));
+  const gc=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"14px",padding:"14px",marginBottom:"10px"});
+  const gr=d({display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"});
+  gr.innerHTML=`<div style="font-size:13px;font-weight:700">📅 今日のノルマ：${S.todayCount} / ${S.todayGoal}問</div>`;
+  gr.appendChild(b("変更",{background:"none",color:"#334155",fontSize:"11px",textDecoration:"underline",padding:"0"},()=>{const n=parseInt(prompt("1日の目標問題数",S.todayGoal));if(!isNaN(n)&&n>0){S.todayGoal=n;save();render();}}));
+  gc.appendChild(gr);
+  const pb=d({background:"rgba(255,255,255,.06)",borderRadius:"6px",height:"8px",overflow:"hidden"});
+  pb.innerHTML=`<div style="width:${gp}%;background:${gp>=100?"#10b981":"linear-gradient(90deg,#2563eb,#3b82f6)"};height:100%;border-radius:6px;transition:width .4s"></div>`;
+  gc.appendChild(pb);
+  if(gp>=100)gc.appendChild(d({color:"#10b981",fontSize:"12px",marginTop:"6px"},"🎉 今日のノルマ達成！"));
+  app.appendChild(gc);
+
+  // weak scene
+  if(S.weakScene){const wa=d({background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:"12px",padding:"10px 14px",marginBottom:"10px"});wa.innerHTML=`<div style="color:#fbbf24;font-size:12px;margin-bottom:6px">⚠️ <strong>要強化：${S.weakScene}</strong> — 反応時間が最も遅いシーン</div>`;wa.appendChild(b(`「${S.weakScene}」を集中練習`,{background:"rgba(251,191,36,.1)",color:"#fbbf24",border:"1px solid rgba(251,191,36,.3)",borderRadius:"8px",padding:"6px 12px",fontSize:"12px"},()=>{S.filterScene=S.weakScene;render();}));app.appendChild(wa);}
+
+  // filter
+  const fc=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"14px",padding:"14px",marginBottom:"10px"});
+  fc.appendChild(b(`🎯 フィルター　${S.filterScene} / ${S.filterLevel==="すべて"?"全Lv":S.filterLevel}　${S.showFilters?"▲":"▼"}`,{background:"none",color:"#475569",fontSize:"13px",padding:"0",width:"100%",textAlign:"left"},()=>{S.showFilters=!S.showFilters;render();}));
+  if(S.showFilters){
+    const fi=d({marginTop:"12px"});fi.innerHTML=`<p style="color:#334155;font-size:11px;letter-spacing:1px;margin-bottom:7px">シーン</p>`;
+    const sr=d({display:"flex",flexWrap:"wrap",gap:"5px",marginBottom:"10px"});
+    SCENES.forEach(s=>{const a=S.filterScene===s;sr.appendChild(b(s,{padding:"5px 12px",borderRadius:"20px",fontSize:"12px",background:a?"rgba(37,99,235,.2)":"rgba(255,255,255,.04)",color:a?"#93c5fd":"#475569",border:`1px solid ${a?"rgba(59,130,246,.5)":"rgba(255,255,255,.07)"}`},()=>{S.filterScene=s;render();}));});
+    fi.appendChild(sr);fi.innerHTML+=`<p style="color:#334155;font-size:11px;letter-spacing:1px;margin-bottom:7px">レベル</p>`;
+    const lr=d({display:"flex",gap:"5px"});
+    LEVELS.forEach(l=>{const a=S.filterLevel===l;const ls=LVS[l]||{bg:"rgba(37,99,235,.2)",t:"#93c5fd",b:"rgba(59,130,246,.5)"};lr.appendChild(b(l,{padding:"5px 14px",borderRadius:"20px",fontSize:"12px",background:a?ls.bg:"rgba(255,255,255,.04)",color:a?ls.t:"#475569",border:`1px solid ${a?ls.b:"rgba(255,255,255,.07)"}`},()=>{S.filterLevel=l;render();}));});
+    fi.appendChild(lr);fc.appendChild(fi);
+  }
+  app.appendChild(fc);
+  app.appendChild(b(`学習スタート (${filt.length}問) →`,{width:"100%",background:"linear-gradient(135deg,#1d4ed8,#3b82f6)",color:"#fff",padding:"16px",borderRadius:"14px",fontSize:"15px",fontWeight:"700",boxShadow:"0 4px 22px rgba(59,130,246,.35)",marginBottom:"8px"},startStudy));
+  if(tL()>0){const ss=d({display:"flex",gap:"7px"});[{l:"学習中",c:tL()-tG(),col:"#3b82f6"},{l:"復習待ち",c:due.length,col:"#a78bfa"},{l:"定着済み",c:tG(),col:"#10b981"}].forEach(({l,c,col})=>{const dd=d({flex:"1",background:"rgba(15,23,42,.8)",border:"1px solid rgba(255,255,255,.05)",borderRadius:"10px",padding:"8px",textAlign:"center"});dd.innerHTML=`<div style="color:#334155;font-size:10px;margin-bottom:3px">${l}</div><div style="color:${col};font-size:18px;font-family:'DM Mono',monospace">${c}</div>`;ss.appendChild(dd);});app.appendChild(ss);}
+}
+
+function rStats(app){
+  if(S.sessionTimes.length>0){const sc=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"14px",padding:"16px",marginBottom:"12px"});sc.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:12px">⏱ 今セッションの反応時間</div>`;const ch=d({display:"flex",alignItems:"flex-end",gap:"3px",height:"50px"});const mx=Math.max(...S.sessionTimes,1);S.sessionTimes.forEach(t=>{const r=tR(t);const bar=d({flex:"1",minWidth:"4px",borderRadius:"2px",background:r?r.c:"#3b82f6",opacity:"0.85"});bar.style.height=`${Math.max(6,Math.round((t/mx)*50))}px`;ch.appendChild(bar);});sc.appendChild(ch);const avg=(S.sessionTimes.reduce((a,b)=>a+b,0)/S.sessionTimes.length).toFixed(1);sc.appendChild(d({color:"#475569",fontSize:"11px",marginTop:"8px"},`平均：${avg}s　最速：${Math.min(...S.sessionTimes)}s　最遅：${Math.max(...S.sessionTimes)}s`));app.appendChild(sc);}
+  const scD={};Object.entries(S.deck).forEach(([k,v])=>{const c=QB.find(q=>q.j===k);if(!c)return;if(!scD[c.sc])scD[c.sc]={n:0,g:0,t:[]};scD[c.sc].n++;if(v.graduated)scD[c.sc].g++;if(v.times&&v.times.length)scD[c.sc].t.push(...v.times);});
+  if(Object.keys(scD).length>0){const sc=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"14px",padding:"16px"});sc.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:12px">📋 シーン別 習熟度</div>`;Object.entries(scD).forEach(([scene,dd])=>{const iw=scene===S.weakScene;const avg=dd.t.length?(dd.t.reduce((a,b)=>a+b,0)/dd.t.length).toFixed(1):null;const row=d({display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px",padding:"8px 10px",background:iw?"rgba(251,191,36,.06)":"rgba(255,255,255,.02)",borderRadius:"10px",border:`1px solid ${iw?"rgba(251,191,36,.2)":"rgba(255,255,255,.05)"}`});const cfg=SC[scene]||{em:"📌"};row.innerHTML=`<span style="font-size:16px">${cfg.em}</span><span style="font-size:13px;font-weight:700;color:${iw?"#fbbf24":"#94a3b8"};min-width:66px">${scene}${iw?" ⚠️":""}</span>`;const pb2=d({flex:"1",background:"rgba(255,255,255,.06)",borderRadius:"4px",height:"6px"});const pct=dd.n?Math.round(dd.g/dd.n*100):0;pb2.innerHTML=`<div style="width:${pct}%;background:#10b981;height:100%;border-radius:4px"></div>`;row.appendChild(pb2);row.appendChild(d({color:"#334155",fontSize:"11px",fontFamily:"'DM Mono',monospace",minWidth:"30px",textAlign:"right"},`${pct}%`));if(avg)row.appendChild(d({color:"#475569",fontSize:"11px",fontFamily:"'DM Mono',monospace",minWidth:"34px"},`⏱${avg}s`));sc.appendChild(row);});app.appendChild(sc);}
+  else app.appendChild(d({color:"#475569",fontSize:"13px",textAlign:"center",padding:"32px"},"学習を始めると統計が表示されます"));
+}
+
+async function rStudy(app){
+  const card=S.queue[S.qIdx];if(!card)return;
+  const cfg=SC[card.sc]||{em:"📌",col:"#3b82f6",svg:""};
+  const step=S.deck[card.j]?.step??null;
+  const rating=tR(S.flipped?S.flipTime:S.elapsed);
+  const dispT=S.flipped?S.flipTime:S.elapsed;
+  const vsC=S.voiceScore===null?null:S.voiceScore>=80?"#10b981":S.voiceScore>=50?"#fbbf24":"#f87171";
+  const isRev=S.mode==="review";
+
+  // progress
+  // ── MODE BANNER ─────────────────────────────────────────────────────────
+  const mb2=d({width:"100%",borderRadius:"12px",padding:"10px 16px",marginBottom:"10px",
+    display:"flex",alignItems:"center",justifyContent:"space-between",
+    background:S.voiceMode?"rgba(239,68,68,.12)":"rgba(59,130,246,.1)",
+    border:`1px solid ${S.voiceMode?"rgba(239,68,68,.4)":"rgba(59,130,246,.35)"}`,
+  });
+  const mL=d({display:"flex",alignItems:"center",gap:"10px"});
+  const mDot=d({width:"10px",height:"10px",borderRadius:"50%",background:S.voiceMode?"#ef4444":"#3b82f6",flexShrink:"0"});
+  const mTxt=d({});
+  mTxt.innerHTML=S.voiceMode
+    ?`<div style="color:#f87171;font-size:13px;font-weight:700">🎤 音声入力モード</div><div style="color:rgba(248,113,113,.6);font-size:11px">マイクボタンで録音 → 採点</div>`
+    :`<div style="color:#60a5fa;font-size:13px;font-weight:700">🔇 サイレントモード</div><div style="color:rgba(96,165,250,.6);font-size:11px">カードをタップして答えを確認</div>`;
+  mL.appendChild(mDot);mL.appendChild(mTxt);mb2.appendChild(mL);
+  const mSwBtn=document.createElement("button");
+  Object.assign(mSwBtn.style,{padding:"5px 12px",borderRadius:"20px",fontSize:"11px",fontWeight:"700",cursor:"pointer",
+    background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.12)",color:"#94a3b8",fontFamily:"inherit"});
+  mSwBtn.textContent="切替";mSwBtn.addEventListener("click",toggleVoiceMode);
+  mb2.appendChild(mSwBtn);
+  app.appendChild(mb2);
+
+  const pr=d({display:"flex",alignItems:"center",gap:"10px",marginBottom:"10px"});
+  if(isRev)pr.innerHTML+=`<span class="tag sr">🔁 復習</span>`;
+  const pb=d({flex:"1",background:"rgba(255,255,255,.06)",borderRadius:"4px",height:"4px",overflow:"hidden"});
+  pb.innerHTML=`<div style="width:${(S.qIdx/S.queue.length)*100}%;background:${isRev?"#7c3aed":"#3b82f6"};height:100%;border-radius:4px;transition:width .3s"></div>`;
+  pr.appendChild(pb);pr.appendChild(d({color:"#334155",fontSize:"11px",fontFamily:"'DM Mono',monospace"},`${S.qIdx+1}/${S.queue.length}`));
+  app.appendChild(pr);
+
+  // timer
+  const tr=d({display:"flex",justifyContent:"center",alignItems:"center",gap:"10px",marginBottom:"10px"});
+  const tb=d({background:S.flipped&&rating?rating.bg:"rgba(255,255,255,.04)",border:`1px solid ${S.flipped&&rating?rating.b:"rgba(255,255,255,.08)"}`,borderRadius:"12px",padding:"6px 16px",display:"flex",alignItems:"center",gap:"8px",transition:"all .3s"});
+  tb.innerHTML=`<span id="tv" style="color:${S.flipped&&rating?rating.c:"#475569"};font-size:20px;font-family:'DM Mono',monospace;font-weight:500;min-width:40px;text-align:right">${dispT!==null?dispT+"s":"—"}</span>`;
+  if(S.flipped&&rating)tb.innerHTML+=`<span style="font-size:13px;color:${rating.c};font-weight:700">${rating.em} ${rating.l}</span>`;
+  tr.appendChild(tb);
+  tr.appendChild(d({display:"flex",gap:"4px",fontSize:"10px",color:"#1e293b"},"<span>⚡≤3s</span><span>🙂≤7s</span><span>🐢＞7s</span>"));
+  app.appendChild(tr);
+
+  // flip card
+  const fw=d({marginBottom:"10px"});fw.className="fw";
+  const fi=d({position:"relative",width:"100%",minHeight:"280px",transition:"transform .45s cubic-bezier(.4,0,.2,1)",transformStyle:"preserve-3d"});
+  if(S.flipped)fi.style.transform="rotateY(180deg)";
+
+  // --- FRONT ---
+  const ff=d({backfaceVisibility:"hidden",WebkitBackfaceVisibility:"hidden",width:"100%",borderRadius:"20px",
+    background:`linear-gradient(160deg,${cfg.svgBg||"#0d1b3e"},${isRev?"#2d1060":"#0d2a5e"})`,
+    border:`1px solid ${isRev?"rgba(167,139,250,.2)":"rgba(59,130,246,.18)"}`,
+    minHeight:"280px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",
+    padding:"22px 18px",textAlign:"center"});
+
+  // image: try fetch, fallback to SVG
+  const imgUrl=await fetchImg(card.sc).catch(()=>null);
+  if(imgUrl){
+    const img=document.createElement("img");
+    img.src=imgUrl;img.className="card-img";
+    img.onerror=()=>{img.style.display="none";};
+    ff.appendChild(img);
+  }else if(cfg.svg){
+    const sv=d({width:"100%",maxWidth:"130px",opacity:"0.18",marginBottom:"8px"});sv.innerHTML=cfg.svg;ff.appendChild(sv);
+  }
+
+  const tags=d({display:"flex",gap:"5px",marginBottom:"12px",flexWrap:"wrap",justifyContent:"center"});
+  tags.innerHTML=`<span class="tag l${card.lv}">${card.lv}</span><span class="tag sc">${cfg.em} ${card.sc}</span>${step!==null?`<span class="tag sr">${IL[step]||"定着"}</span>`:""}`;
+  ff.appendChild(tags);
+  ff.appendChild(d({color:"#f1f5f9",fontSize:"var(--card-font, 21px)",fontWeight:"700",lineHeight:"1.6",marginBottom:"14px"},card.j));
+  if(!S.voiceMode)ff.appendChild(d({color:isRev?"#4c1d95":"#1e40af",fontSize:"13px"},"タップして答えを確認 →"));
+  fi.appendChild(ff);
+
+  // --- BACK ---
+  const fb=d({backfaceVisibility:"hidden",WebkitBackfaceVisibility:"hidden",position:"absolute",top:"0",left:"0",width:"100%",borderRadius:"20px",transform:"rotateY(180deg)",
+    background:"linear-gradient(160deg,#071a0d,#0a2a14)",border:"1px solid rgba(16,185,129,.2)",
+    minHeight:"280px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",
+    padding:"20px 18px",textAlign:"center"});
+  fb.appendChild(d({color:"#6ee7b7",fontSize:"10px",letterSpacing:"3px",marginBottom:"10px"},"MODEL ANSWER"));
+  fb.appendChild(d({color:"#f0fdf4",fontSize:"20px",fontWeight:"700",lineHeight:"1.6",fontFamily:"'DM Mono',monospace",marginBottom:"6px"},card.e));
+  fb.appendChild(d({color:"rgba(148,163,184,.85)",fontSize:"var(--jp-font, 15px)",marginBottom:"10px"},card.j));
+  if(card.ctx)fb.appendChild(d({color:"#166534",fontSize:"11px",marginBottom:"10px",lineHeight:"1.55",maxWidth:"310px"},`💡 ${card.ctx}`));
+  if(window.speechSynthesis){const sb=d({});sb.id="spk-btn";sb.className="spk";sb.textContent="🔊 リピート再生";sb.style.cursor="pointer";sb.addEventListener("click",e=>{e.stopPropagation();(ttsSp||ttsRp)?stopRepeat():startRepeat(card.e);});fb.appendChild(sb);}
+  if(S.voiceMode&&S.voiceText){
+    const vd=d({borderRadius:"14px",padding:"14px 16px",width:"100%",maxWidth:"360px",
+      background:`${vsC}10`,border:`1px solid ${vsC}40`,transition:"all .3s"});
+    vd.setAttribute("id","voice-fb-panel");
+    if(S.voiceFeedback){
+      updateFeedbackPanel(vd,S.voiceFeedback,S.voiceText);
+    }else{
+      // Show loading state with basic score
+      vd.innerHTML=`
+        <p style="color:#475569;font-size:10px;letter-spacing:2px;margin-bottom:6px">あなたの発話</p>
+        <p style="color:#cbd5e1;font-family:'DM Mono',monospace;font-size:13px;margin-bottom:10px">"${S.voiceText}"</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px">
+          <div style="width:20px;height:20px;border:2px solid ${vsC};border-top-color:transparent;border-radius:50%;animation:spin .75s linear infinite"></div>
+          <span style="color:#475569;font-size:13px">AIがフィードバックを生成中...</span>
+        </div>
+      `;
+    }
+    fb.appendChild(vd);
+  }
+  fi.appendChild(fb);fw.appendChild(fi);
+
+  // touch/click — card ONLY flips (voice recording is via dedicated mic button only)
+  fw.addEventListener("touchend",e=>{
+    e.preventDefault();e.stopPropagation();
+    _tf=true;setTimeout(()=>{_tf=false;},600);
+    flipCard();
+  },{passive:false});
+  fw.addEventListener("click",e=>{if(_tf)return;flipCard();});
+  app.appendChild(fw);
+
+
+
+  // voice mic button — only shown in voice mode on front side
+  if(S.voiceMode&&!S.flipped){
+    if(SRC){
+      const micWrap=d({display:"flex",flexDirection:"column",alignItems:"center",gap:"10px",marginBottom:"8px"});
+      // Big mic button
+      const micBtn=document.createElement("button");
+      micBtn.id="mic-btn";
+      Object.assign(micBtn.style,{width:"80px",height:"80px",borderRadius:"50%",cursor:"pointer",
+        background:listening?"linear-gradient(135deg,#dc2626,#ef4444)":"linear-gradient(135deg,#1d4ed8,#3b82f6)",
+        display:"flex",alignItems:"center",justifyContent:"center",fontSize:"32px",
+        boxShadow:listening?"0 0 0 8px rgba(239,68,68,.2),0 4px 20px rgba(239,68,68,.4)":"0 4px 20px rgba(59,130,246,.4)",
+        border:"none",flexShrink:"0",fontFamily:"inherit"});
+      if(listening){micBtn.style.animation="rp 1s ease infinite";}
+      micBtn.textContent=listening?"⏹":"🎤";
+      // Single handler for both touch and click
+      let _mTf=false;
+      micBtn.addEventListener("touchend",e=>{
+        e.preventDefault();e.stopPropagation();
+        _mTf=true;setTimeout(()=>{_mTf=false;},500);
+        listening?stopListening():startListening();
+      },{passive:false});
+      micBtn.addEventListener("click",e=>{
+        e.stopPropagation();
+        if(_mTf)return;
+        listening?stopListening():startListening();
+      });
+      micWrap.appendChild(micBtn);
+      // Status + interim text — persistent elements updated by updateMicUI
+      const micStatus=d({textAlign:"center"});
+      micStatus.setAttribute("id","mic-status");
+      micStatus.innerHTML=listening
+        ?'<span style="color:#f87171;font-weight:700">🔴 録音中</span><br><span style="color:rgba(248,113,113,.6);font-size:12px">もう一度タップで停止＆判定</span>'
+        :'<span style="color:#60a5fa;font-weight:600">👆 マイクボタンを押して録音開始</span>';
+      micWrap.appendChild(micStatus);
+      const micInterim=d({color:"#94a3b8",fontSize:"13px",fontFamily:"'DM Mono',monospace",minHeight:"20px",textAlign:"center",marginTop:"4px"},
+        accTxt?'"'+accTxt+'"':"");
+      micInterim.setAttribute("id","vi");
+      micWrap.appendChild(micInterim);
+      app.appendChild(micWrap);
+    }else{
+      app.appendChild(d({color:"#475569",fontSize:"12px",textAlign:"center",marginBottom:"8px"},"※ 音声認識はChrome推奨"));
+    }
+  }
+
+  // rating buttons — always present, hidden until flipped
+  const rr=d({});rr.className="rr";rr.style.visibility=S.flipped?"visible":"hidden";
+  const rno=mk("button",{},"😅 もう一度");rno.className="rno";rno.addEventListener("click",()=>handleResult(false));
+  const ryes=mk("button",{},"✅ 覚えた！");ryes.className="ryes";ryes.addEventListener("click",()=>handleResult(true));
+  rr.appendChild(rno);rr.appendChild(ryes);app.appendChild(rr);
+  app.appendChild(b("ホームへ",{background:"none",color:"#334155",fontSize:"12px",textDecoration:"underline",padding:"0",display:"block",margin:"10px auto 0"},goHome));
+}
+
+function rDone(app){
+  const due=getDue();
+  const w=d({background:"var(--card)",border:"1px solid var(--border)",borderRadius:"20px",padding:"32px 20px",textAlign:"center"});
+  w.innerHTML=`<div style="font-size:44px;margin-bottom:12px">🎉</div><h2 style="font-size:20px;font-weight:700;margin-bottom:6px">セッション完了！</h2><p style="color:#475569;font-size:14px;margin-bottom:16px">${S.queue.length}問を学習しました</p>`;
+  if(S.sessionTimes.length>0){const avg=(S.sessionTimes.reduce((a,b)=>a+b,0)/S.sessionTimes.length).toFixed(1);const r=tR(parseFloat(avg));const ts=d({background:r?r.bg:"rgba(255,255,255,.04)",border:`1px solid ${r?r.b:"rgba(255,255,255,.08)"}`,borderRadius:"12px",padding:"10px 14px",marginBottom:"14px",display:"inline-block"});ts.innerHTML=`<span style="color:${r?r.c:"#94a3b8"};font-size:20px;font-family:'DM Mono',monospace">${avg}s</span> <span style="color:${r?r.c:"#94a3b8"};font-size:13px">${r?r.em+" "+r.l:""} 平均反応時間</span>`;w.appendChild(ts);}
+  const ss=d({display:"flex",gap:"7px",marginBottom:"16px"});[{l:"学習中",c:tL()-tG(),col:"#3b82f6"},{l:"復習待ち",c:due.length,col:"#a78bfa"},{l:"定着済み",c:tG(),col:"#10b981"}].forEach(({l,c,col})=>{const dd=d({flex:"1",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)",borderRadius:"12px",padding:"10px 6px"});dd.innerHTML=`<div style="color:#334155;font-size:10px;margin-bottom:3px">${l}</div><div style="color:${col};font-size:18px;font-family:'DM Mono',monospace">${c}</div>`;ss.appendChild(dd);});
+  w.appendChild(ss);
+  const btns=d({display:"flex",gap:"9px"});
+  if(due.length>0)btns.appendChild(b(`復習 (${due.length})`,{flex:"1",background:"linear-gradient(135deg,#6d28d9,#7c3aed)",color:"#fff",padding:"14px",borderRadius:"12px",fontSize:"14px",fontWeight:"700"},startReview));
+  btns.appendChild(b("ホームへ →",{flex:"1",background:"linear-gradient(135deg,#1d4ed8,#3b82f6)",color:"#fff",padding:"14px",borderRadius:"12px",fontSize:"14px",fontWeight:"700"},goHome));
+  w.appendChild(btns);app.appendChild(w);
+}
+
+// ═══ INIT ═════════════════════════════════════════════════════════════════════
+initTTS();initSR();render();
+</script>
+</body>
+</html>
