@@ -310,23 +310,26 @@ function save(){try{localStorage.setItem("bef3",JSON.stringify({deck:S.deck,toda
 
 function tR(s){if(s===null)return null;if(s<=3)return{l:"即答",em:"⚡",c:"#10b981",bg:"rgba(16,185,129,.12)",b:"rgba(52,211,153,.3)"};if(s<=7)return{l:"普通",em:"🙂",c:"#fbbf24",bg:"rgba(251,191,36,.12)",b:"rgba(251,191,36,.3)"};return{l:"じっくり",em:"🐢",c:"#f87171",bg:"rgba(239,68,68,.12)",b:"rgba(248,113,113,.3)"};}
 function sim(a,b){const c=s=>s.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(" ").filter(Boolean);const wa=new Set(c(a)),wb=new Set(c(b));if(!wb.size)return 0;let m=0;wb.forEach(w=>{if(wa.has(w))m++;});return Math.round(m/wb.size*100);}
-async function getAIFeedback(japanese,modelEnglish,userSpeech){
-  try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-haiku-4-5-20251001",
-        max_tokens:300,
-        system:"ビジネス英語コーチ。JSON形式のみ。マークダウン不可。",
-        messages:[{role:"user",content:`JP:${japanese} / 模範:${modelEnglish} / 発話:${userSpeech}
-{"score":整数0-100,"good":"良い点1文","improve":"改善1文","tip":"キーフレーズ一言"}`}]
-      })
-    });
-    const dat=await res.json();
-    const txt=dat.content.map(b=>b.text||"").join("");
-    return JSON.parse(txt.replace(/```json|```/g,"").trim());
-  }catch(e){console.error("AI feedback error:",e);return null;}
+function getAIFeedback(japanese,modelEnglish,userSpeech){
+  // Instant local feedback — zero API delay
+  const score=sim(userSpeech,modelEnglish);
+  const uW=new Set(userSpeech.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(" ").filter(Boolean));
+  const mW=modelEnglish.toLowerCase().replace(/[^a-z0-9 ]/g,"").split(" ").filter(Boolean);
+  const matched=mW.filter(w=>uW.has(w));
+  const missing=mW.filter(w=>!uW.has(w)&&w.length>2).slice(0,3);
+  let good,improve,tip;
+  if(score>=80){
+    good="自然なビジネス英語として十分通用します。発音・抑揚も意識すると完璧です。";
+    improve="模範解答とほぼ同じです。このまま反復練習で定着させましょう。";
+  }else if(score>=50){
+    good=matched.length>0?`「${matched.slice(0,2).join("」「")}」など重要な単語が入っています。`:"意味は概ね伝わります。";
+    improve=missing.length>0?`「${missing.join(" ")}」を加えると模範解答に近づきます。`:"語順や冠詞を確認してみましょう。";
+  }else{
+    good=matched.length>0?`「${matched[0]}」が含まれています。`:"英語で話す練習を続けましょう。";
+    improve=`模範解答「${modelEnglish}」をそのまま声に出して繰り返しましょう。`;
+  }
+  tip=`"${modelEnglish.split(" ").slice(0,5).join(" ")}" をまるごと暗記`;
+  return {score,good,improve,tip};
 }
 function sh(a){return[...a].sort(()=>Math.random()-.5)}
 function getDue(){return Object.entries(S.deck).filter(([,v])=>!v.graduated&&v.nextReview<=Date.now()).map(([k])=>QB.find(q=>q.j===k)).filter(Boolean);}
@@ -352,8 +355,36 @@ async function fetchImg(scene){
 
 // ═══ TTS ══════════════════════════════════════════════════════════════════════
 let ttsV=null,ttsSp=false,ttsRp=false;
-function initTTS(){if(!window.speechSynthesis)return;function pk(){const v=speechSynthesis.getVoices();ttsV=[v.find(x=>x.name==="Samantha"),v.find(x=>x.name==="Google US English"),v.find(x=>x.name.toLowerCase().includes("female")&&x.lang.startsWith("en")),v.find(x=>x.lang==="en-US"),v.find(x=>x.lang.startsWith("en"))].find(Boolean)||null;}pk();speechSynthesis.onvoiceschanged=pk;}
-function spkOnce(t,cb){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.88;u.pitch=1.1;u.volume=1;if(ttsV)u.voice=ttsV;u.onstart=()=>{ttsSp=true;updSpk();};u.onend=()=>{ttsSp=false;updSpk();if(cb)cb();};u.onerror=()=>{ttsSp=false;updSpk();};speechSynthesis.speak(u);}
+function initTTS(){
+  if(!window.speechSynthesis)return;
+  function pk(){
+    const v=speechSynthesis.getVoices();
+    if(!v.length)return; // not loaded yet
+    ttsV=[
+      v.find(x=>x.name==="Google US English"),
+      v.find(x=>x.name==="Samantha"),
+      v.find(x=>x.name.toLowerCase().includes("female")&&x.lang.startsWith("en")),
+      v.find(x=>x.lang==="en-US"),
+      v.find(x=>x.lang.startsWith("en")),
+    ].find(Boolean)||null;
+    console.log("TTS voice selected:",ttsV?.name||"default");
+  }
+  pk();
+  speechSynthesis.onvoiceschanged=pk;
+  // Android: trigger voices load with a silent utterance
+  setTimeout(()=>{
+    if(!ttsV){
+      const u=new SpeechSynthesisUtterance("");
+      u.volume=0;
+      speechSynthesis.speak(u);
+      speechSynthesis.cancel();
+      pk();
+    }
+  },500);
+}
+function spkOnce(t,cb){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.88;u.pitch=1.1;u.volume=1;if(ttsV)u.voice=ttsV;u.onstart=()=>{ttsSp=true;updSpk();};u.onend=()=>{ttsSp=false;updSpk();if(cb)cb();};u.onerror=(e)=>{console.log("TTS error:",e.error);ttsSp=false;updSpk();if(e.error!=="interrupted"&&cb)cb();};// Android Chrome workaround: resume before speak
+if(speechSynthesis.paused)speechSynthesis.resume();
+speechSynthesis.speak(u);}
 function startRepeat(t){ttsRp=true;function lp(){if(!ttsRp)return;spkOnce(t,()=>{if(ttsRp)setTimeout(lp,600);});}lp();}
 function stopRepeat(){ttsRp=false;if(window.speechSynthesis)speechSynthesis.cancel();ttsSp=false;updSpk();}
 function updSpk(){const b=document.getElementById("spk-btn");if(!b)return;if(ttsSp||ttsRp){b.textContent="⏹ 停止";b.className="spk on";}else{b.textContent="🔊 リピート再生";b.className="spk";}}
@@ -361,29 +392,25 @@ function updSpk(){const b=document.getElementById("spk-btn");if(!b)return;if(tts
 // ═══ SPEECH REC ═══════════════════════════════════════════════════════════════
 const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
 let listening=false,activeRec=null,accTxt="",_tf=false;
-async function commit(){
+function commit(){
   const t=accTxt.trim();
   const c=S.queue[S.qIdx];
   S.voiceText=t||"（聞き取れませんでした）";
-  S.voiceScore=t&&c?sim(t,c.e):0;
-  S.voiceFeedback=null; // reset, will load async
+  // Get instant local feedback immediately
+  if(t&&c){
+    const fb=getAIFeedback(c.j,c.e,t);
+    S.voiceScore=fb.score;
+    S.voiceFeedback=fb;
+  }else{
+    S.voiceScore=0;
+    S.voiceFeedback=null;
+  }
   clearInterval(S.timerInterval);
   S.flipTime=parseFloat(((Date.now()-S.startTime)/1000).toFixed(1));
   S.flipped=true;
   accTxt="";
   render();
-  if(c)setTimeout(()=>startRepeat(c.e),600);
-  // Fetch AI feedback in background, update when ready
-  if(t&&c){
-    const fb=await getAIFeedback(c.j,c.e,t);
-    if(fb){
-      S.voiceScore=fb.score;
-      S.voiceFeedback=fb;
-      // Update feedback panel without full re-render
-      const panel=document.getElementById("voice-fb-panel");
-      if(panel) updateFeedbackPanel(panel,fb,S.voiceText);
-    }
-  }
+  if(c)setTimeout(()=>startRepeat(c.e),50);
 }
 function initSR(){if(!SRC)console.warn("SpeechRecognition not supported");}
 function updateMicUI(){
@@ -517,7 +544,7 @@ function startReview(){S.queue=sh(getDue());S.qIdx=0;S.flipped=false;S.mode="rev
 function goHome(){clearInterval(S.timerInterval);stopRepeat();if(listening){listening=false;if(activeRec){try{activeRec.abort();}catch(x){}activeRec=null;}}S.mode="home";S.flipped=false;render();}
 function navTo(t){if(S.mode==="study"||S.mode==="review")goHome();S.tab=t;render();}
 function toggleVoiceMode(){S.voiceMode=!S.voiceMode;render();}
-function flipCard(){if(!S.flipped){clearInterval(S.timerInterval);S.flipTime=parseFloat(((Date.now()-S.startTime)/1000).toFixed(1));const c=S.queue[S.qIdx];if(c){S.sessionTimes.push(S.flipTime);if(!S.deck[c.j])S.deck[c.j]={step:0,nextReview:0,graduated:false,times:[]};S.deck[c.j].times=(S.deck[c.j].times||[]).concat(S.flipTime).slice(-20);}S.flipped=true;render();if(c)setTimeout(()=>startRepeat(c.e),300);}else{stopRepeat();S.flipped=false;render();}}
+function flipCard(){if(!S.flipped){clearInterval(S.timerInterval);S.flipTime=parseFloat(((Date.now()-S.startTime)/1000).toFixed(1));const c=S.queue[S.qIdx];if(c){S.sessionTimes.push(S.flipTime);if(!S.deck[c.j])S.deck[c.j]={step:0,nextReview:0,graduated:false,times:[]};S.deck[c.j].times=(S.deck[c.j].times||[]).concat(S.flipTime).slice(-20);}S.flipped=true;render();if(c){const _txt=c.e;setTimeout(()=>{speechSynthesis.cancel();startRepeat(_txt);},150);}}else{stopRepeat();S.flipped=false;render();}}
 function handleResult(knew){stopRepeat();const c=S.queue[S.qIdx];if(!c)return;const ex=S.deck[c.j]||{step:0,times:[]};const ns=knew?Math.min(ex.step+1,INTV.length):0;S.deck[c.j]={...ex,step:ns,nextReview:Date.now()+(INTV[ns]||0)*60000,graduated:ns>=INTV.length};S.todayCount++;if(!S.sessionSceneScores[c.sc])S.sessionSceneScores[c.sc]=[];S.sessionSceneScores[c.sc].push(S.flipTime||5);const scT={};Object.entries(S.deck).forEach(([k,v])=>{const q=QB.find(x=>x.j===k);if(!q||!v.times||!v.times.length)return;if(!scT[q.sc])scT[q.sc]=[];scT[q.sc].push(...v.times);});let sl=null,sa=0;Object.entries(scT).forEach(([sc,arr])=>{const avg=arr.reduce((a,b)=>a+b,0)/arr.length;if(avg>sa){sa=avg;sl=sc;}});S.weakScene=sl;save();const nx=S.qIdx+1;if(nx>=S.queue.length){S.mode="done";clearInterval(S.timerInterval);render();}else{S.qIdx=nx;S.flipped=false;S.voiceText="";S.voiceScore=null;S.voiceFeedback=null;render();startTimer();}}
 
 // ═══ DOM HELPERS ══════════════════════════════════════════════════════════════
@@ -715,22 +742,8 @@ async function rStudy(app){
       updateFeedbackPanel(vd,S.voiceFeedback,S.voiceText);
     }else{
       // Show loading state with basic score
-      // Show immediate score + loading indicator
-      const immScore = S.voiceScore||0;
-      const immC = immScore>=80?"#10b981":immScore>=60?"#fbbf24":"#f87171";
-      vd.innerHTML=`
-        <p style="color:#475569;font-size:10px;letter-spacing:2px;margin-bottom:6px">あなたの発話</p>
-        <p style="color:#cbd5e1;font-family:'DM Mono',monospace;font-size:13px;margin-bottom:10px">"${S.voiceText}"</p>
-        <div style="display:flex;align-items:baseline;gap:6px;justify-content:center;margin-bottom:10px">
-          <span style="color:${immC};font-size:44px;font-weight:700;font-family:'DM Mono',monospace">${immScore}</span>
-          <span style="color:${immC};font-size:16px;font-weight:700">点</span>
-          <span style="color:rgba(148,163,184,.5);font-size:13px">/ 100点</span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:rgba(255,255,255,.04);border-radius:10px">
-          <div style="width:16px;height:16px;border:2px solid #3b82f6;border-top-color:transparent;border-radius:50%;animation:spin .75s linear infinite;flex-shrink:0"></div>
-          <span style="color:#60a5fa;font-size:13px">AIが詳細フィードバックを生成中...</span>
-        </div>
-      `;
+      // Should not reach here since voiceFeedback is always set now
+      vd.innerHTML=`<p style="color:#475569;font-size:13px">フィードバックを表示中...</p>`;
     }
     fb.appendChild(vd);
   }
@@ -740,9 +753,13 @@ async function rStudy(app){
   fw.addEventListener("touchend",e=>{
     e.preventDefault();e.stopPropagation();
     _tf=true;setTimeout(()=>{_tf=false;},600);
+    // Call flipCard synchronously within user gesture for iOS audio
     flipCard();
   },{passive:false});
-  fw.addEventListener("click",e=>{if(_tf)return;flipCard();});
+  fw.addEventListener("click",e=>{
+    if(_tf)return;
+    flipCard();
+  });
   app.appendChild(fw);
 
 
